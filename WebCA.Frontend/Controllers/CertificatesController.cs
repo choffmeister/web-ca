@@ -19,9 +19,9 @@ namespace WebCA.Frontend.Controllers
             return View(certificates);
         }
 
-        public ActionResult CreateRoot()
+        public ActionResult Create()
         {
-            CreateRootCAForm model = new CreateRootCAForm();
+            CreateCertificateForm model = new CreateCertificateForm();
             model.NotBefore = DateTime.Today;
             model.NotAfter = DateTime.Today.AddYears(10);
 
@@ -29,12 +29,14 @@ namespace WebCA.Frontend.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateRoot(CreateRootCAForm model)
+        public ActionResult Create(CreateCertificateForm model)
         {
             if (ModelState.IsValid)
             {
+                string name = X509Extensions.BuildDistinguishedName(model.Country, model.State, model.Locality, model.Organization, model.OrganizationalUnit, model.CommonName);
+
                 RSACryptoServiceProvider caKey = new RSACryptoServiceProvider(1024);
-                X509Certificate caCert = X509Extensions.CreateRootCA(model.CommonName, model.NotBefore, model.NotAfter, caKey);
+                X509Certificate caCert = X509Extensions.CreateCertificate(name, model.IsCertificateAuthority, model.NotBefore, model.NotAfter, caKey);
                 PKCS8.PrivateKeyInfo caPrivateKey = PKCS8Extensions.CreateFromRSA(caKey);
                 PKCS8.EncryptedPrivateKeyInfo caPrivateKeyEnc = caPrivateKey.Encrypt(model.PrivateKeyPassphrase);
 

@@ -8,9 +8,11 @@ namespace WebCA.Frontend.Extensions
 {
     public class X509Extensions
     {
-        public static X509Certificate CreateRootCA(string commonName, DateTime notBefore, DateTime notAfter, RSA key)
+        private static readonly char[] _charactersToEscape = { '\\', ',', '+', '"', '<', '>', ';' };
+
+        public static X509Certificate CreateCertificate(string subjectName, bool isCertificateAuthority, DateTime notBefore, DateTime notAfter, RSA key)
         {
-            string name = string.Format("CN={0}", commonName);
+            string name = subjectName;
 
             X509CertificateBuilder builder = new X509CertificateBuilder(3);
             builder.SerialNumber = GenerateSerialNumber();
@@ -20,7 +22,11 @@ namespace WebCA.Frontend.Extensions
             builder.SubjectName = name;
             builder.SubjectPublicKey = key;
             builder.Hash = "SHA1";
-            builder.Extensions.Add(new BasicConstraintsExtension() { CertificateAuthority = true });
+
+            if (isCertificateAuthority)
+            {
+                builder.Extensions.Add(new BasicConstraintsExtension() { CertificateAuthority = true });
+            }
 
             return new X509Certificate(builder.Sign(key));
         }
@@ -38,6 +44,32 @@ namespace WebCA.Frontend.Extensions
         public static string FormatSerialNumber(byte[] serialNumber)
         {
             return string.Join(":", serialNumber.Select(n => string.Format("{0:x2}", n)));
+        }
+
+        public static string BuildDistinguishedName(string country, string state, string locality, string organization, string organizationalUnit, string commonName)
+        {
+            string name = null;
+            if (!string.IsNullOrEmpty(country)) name += string.Format("C={0},", EscapeDistinguishedNameComponent(country));
+            if (!string.IsNullOrEmpty(state)) name += string.Format("ST={0},", EscapeDistinguishedNameComponent(state));
+            if (!string.IsNullOrEmpty(locality)) name += string.Format("L={0},", EscapeDistinguishedNameComponent(locality));
+            if (!string.IsNullOrEmpty(organization)) name += string.Format("O={0},", EscapeDistinguishedNameComponent(organization));
+            if (!string.IsNullOrEmpty(organizationalUnit)) name += string.Format("OU={0},", EscapeDistinguishedNameComponent(organizationalUnit));
+            if (!string.IsNullOrEmpty(commonName)) name += string.Format("CN={0},", EscapeDistinguishedNameComponent(commonName));
+            name = name.Substring(0, name.Length - 1);
+
+            return name;
+        }
+
+        public static string EscapeDistinguishedNameComponent(string value)
+        {
+            value = value.Trim();
+
+            foreach (char c in _charactersToEscape)
+            {
+                value = value.Replace(c.ToString(), "\\" + c.ToString());
+            }
+
+            return value;
         }
     }
 }

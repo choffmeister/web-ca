@@ -1,0 +1,61 @@
+﻿@model WebCA.Frontend.Forms.CreateCertificateForm
+@section title {
+Create new certificate
+}
+@using (Html.BeginForm())
+{
+    <div>
+        @Html.LabelFor(model => model.Country)
+        @Html.ValidationMessageFor(model => model.Country)
+        @Html.TextBoxFor(model => model.Country)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.State)
+        @Html.ValidationMessageFor(model => model.State)
+        @Html.TextBoxFor(model => model.State)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.Locality)
+        @Html.ValidationMessageFor(model => model.Locality)
+        @Html.TextBoxFor(model => model.Locality)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.Organization)
+        @Html.ValidationMessageFor(model => model.Organization)
+        @Html.TextBoxFor(model => model.Organization)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.OrganizationalUnit)
+        @Html.ValidationMessageFor(model => model.OrganizationalUnit)
+        @Html.TextBoxFor(model => model.OrganizationalUnit)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.CommonName)
+        @Html.ValidationMessageFor(model => model.CommonName)
+        @Html.TextBoxFor(model => model.CommonName)
+    </div>
+    <hr />
+    <div>
+        @Html.LabelFor(model => model.IsCertificateAuthority)
+        @Html.ValidationMessageFor(model => model.IsCertificateAuthority)
+        @Html.CheckBoxFor(model => model.IsCertificateAuthority)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.NotBefore)
+        @Html.ValidationMessageFor(model => model.NotBefore)
+        @Html.TextBoxFor(model => model.NotBefore)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.NotAfter)
+        @Html.ValidationMessageFor(model => model.NotAfter)
+        @Html.TextBoxFor(model => model.NotAfter)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.PrivateKeyPassphrase)
+        @Html.ValidationMessageFor(model => model.PrivateKeyPassphrase)
+        @Html.PasswordFor(model => model.PrivateKeyPassphrase)
+    </div>
+    <div>
+        <input type="submit" class="btn btn-primary" />
+    </div>
+}
