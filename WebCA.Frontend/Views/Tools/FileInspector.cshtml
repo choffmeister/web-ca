@@ -1,0 +1,22 @@
+﻿@model IEnumerable<object>
+@section title {
+File Inspector
+}
+@using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <div>
+        <input type="file" name="file" />
+    </div>
+    <div>
+        <input type="submit" />
+    </div>
+}
+@if (Model != null)
+{
+    <ul>
+        @foreach (object element in Model)
+        {
+            <li>@element.ToString()</li>
+        }
+    </ul>
+}
