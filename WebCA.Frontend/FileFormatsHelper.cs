@@ -35,7 +35,6 @@ namespace WebCA.Frontend
                 {
                     byte[] dataBuffer = Convert.FromBase64String(dataStringBuilder.ToString());
 
-
                     switch (typeString)
                     {
                         case "RSA PUBLIC KEY": // PKCS#1 RSAPublicKey
@@ -44,7 +43,7 @@ namespace WebCA.Frontend
                         case "PUBLIC KEY": // X.509 SubjectPublicKeyInfo
                             throw new NotImplementedException();
 
-                        case "ENCRYPTED PRIVATE KEY": // PKCS#1 EncryptedPrivateKeyInfo
+                        case "ENCRYPTED PRIVATE KEY": // PKCS#8 EncryptedPrivateKeyInfo
                             result.Add(GetPKCS8EncryptedPrivateKeyInfo(dataBuffer));
                             break;
 

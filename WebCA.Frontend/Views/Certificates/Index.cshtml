@@ -1,0 +1,40 @@
+﻿@model IEnumerable<string>
+@section title {
+Certificates
+}
+@section operations {
+    <div class="btn-group">
+        <a href="@Url.Action("CreateRoot")" class="btn">Root certified authority</a>
+    </div>
+}
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>
+                Issued at
+            </th>
+            <th>
+                Serial number
+            </th>
+            <th>
+                Name
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var certificate in Model.Select(n => n.Split(new char[] { ' ' })))
+        {
+            <tr>
+                <td>
+                    @certificate[0]
+                </td>
+                <td>
+                    @certificate[1]
+                </td>
+                <td>
+                    @string.Join(" ", @certificate.Skip(2))
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

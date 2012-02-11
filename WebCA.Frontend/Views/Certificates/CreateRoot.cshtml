@@ -1,0 +1,30 @@
+﻿@model WebCA.Frontend.Forms.CreateRootCAForm
+@section title {
+Create new root certified authority
+}
+@using (Html.BeginForm())
+{
+    <div>
+        @Html.LabelFor(model => model.CommonName)
+        @Html.ValidationMessageFor(model => model.CommonName)
+        @Html.TextBoxFor(model => model.CommonName)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.NotBefore)
+        @Html.ValidationMessageFor(model => model.NotBefore)
+        @Html.TextBoxFor(model => model.NotBefore)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.NotAfter)
+        @Html.ValidationMessageFor(model => model.NotAfter)
+        @Html.TextBoxFor(model => model.NotAfter)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.PrivateKeyPassphrase)
+        @Html.ValidationMessageFor(model => model.PrivateKeyPassphrase)
+        @Html.TextBoxFor(model => model.PrivateKeyPassphrase)
+    </div>
+    <div>
+        <input type="submit" class="btn btn-primary" />
+    </div>
+}
