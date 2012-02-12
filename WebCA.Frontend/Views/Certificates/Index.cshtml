@@ -1,4 +1,4 @@
-﻿@model IEnumerable<string>
+﻿@model IEnumerable<WebCA.Frontend.CertificateKeyManager.SerialListEntry>
 @section title {
 Certificates
 }
@@ -14,25 +14,25 @@ Certificates
                 Issued at
             </th>
             <th>
-                Serial number
+                Not before
             </th>
             <th>
-                Name
+                Not after
             </th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var certificate in Model.Select(n => n.Split(new char[] { ' ' })))
+        @foreach (var certificate in Model)
         {
             <tr>
                 <td>
-                    @certificate[0]
+                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.Replace(":", "") })
                 </td>
                 <td>
-                    @certificate[1]
+                    @certificate.NotBefore
                 </td>
                 <td>
-                    @string.Join(" ", @certificate.Skip(2))
+                    @certificate.NotAfter
                 </td>
             </tr>
         }
