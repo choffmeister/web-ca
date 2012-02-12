@@ -20,7 +20,7 @@ namespace WebCA.Frontend.Controllers
         {
             X509Certificate certificate = CertificateKeyManager.GetCertificate(id);
 
-            return View(certificate);
+            return View(Tuple.Create(id, certificate));
         }
 
         public ActionResult Create()
@@ -87,6 +87,45 @@ namespace WebCA.Frontend.Controllers
             else
             {
                 return View(model);
+            }
+        }
+
+        public ActionResult Download(string format, string serial, string privateKeyPassword)
+        {
+            X509Certificate certificate;
+            PKCS8.EncryptedPrivateKeyInfo privateKeyEnc;
+
+            switch (format)
+            {
+                case "crt":
+                    certificate = CertificateKeyManager.GetCertificate(serial);
+
+                    return new FileContentResult(certificate.RawData, "application/pkix-cert") { FileDownloadName = "key" + "." + format };
+                case "crt.pem":
+                    certificate = CertificateKeyManager.GetCertificate(serial);
+
+                    return new FileContentResult(PEMContainer.Save(PEMContainer.Certificate, certificate.RawData), "application/x-pem-file") { FileDownloadName = "key" + "." + format };
+                case "key":
+                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
+
+                    return new FileContentResult(privateKeyEnc.GetBytes(), "application/pkcs8") { FileDownloadName = "key" + "." + format };
+                case "key.pem":
+                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
+
+                    return new FileContentResult(PEMContainer.Save(PEMContainer.EncryptedPrivateKey, privateKeyEnc.GetBytes()), "application/pkcs8") { FileDownloadName = "key" + "." + format };
+                case "pfx":
+                    certificate = CertificateKeyManager.GetCertificate(serial);
+                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
+
+                    PKCS12 pkcs12 = new PKCS12();
+                    RSA key = PKCS8.PrivateKeyInfo.DecodeRSA(privateKeyEnc.Decrypt(privateKeyPassword).PrivateKey);
+                    pkcs12.AddCertificate(certificate);
+                    pkcs12.AddKeyBag(key);
+                    pkcs12.Password = privateKeyPassword;
+
+                    return new FileContentResult(pkcs12.GetBytes(), "application/x-pkcs12") { FileDownloadName = "key" + "." + format };
+                default:
+                    throw new NotSupportedException(string.Format("Format '{0}' is not supported", format));
             }
         }
     }

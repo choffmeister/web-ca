@@ -1,5 +1,44 @@
-﻿@model Mono.Security.X509.X509Certificate
+﻿@model Tuple<string, Mono.Security.X509.X509Certificate>
 @section title {
 Certificate
 }
-<pre>@WebCA.Security.Extensions.ASN1Extensions.ConvertToStringTree(new Mono.Security.ASN1(Model.RawData)).ToString()</pre>
+@section subtitle {
+    @Model.Item2.SubjectName
+}
+@section operations
+{
+    <div class="btn-group">
+        <a class="btn" href="#download">Download</a>
+    </div>
+}
+<pre>@WebCA.Security.Extensions.ASN1Extensions.ConvertToStringTree(new Mono.Security.ASN1(Model.Item2.RawData)).ToString()</pre>
+<hr />
+<h1 id="download">Download</h1>
+@using (Html.BeginForm("Download", null))
+{
+    <div>
+        <ul>
+            <li>
+                <input type="radio" name="format" value="crt" />
+                Certificate only (DER encoded) </li>
+            <li>
+                <input type="radio" name="format" value="crt.pem" />
+                Certificate only (PEM encoded) </li>
+            <li>
+                <input type="radio" name="format" value="key" />
+                Private key only (DER encoded) </li>
+            <li>
+                <input type="radio" name="format" value="key.pem" />
+                Private key only (PEM encoded) </li>
+            <li>
+                <div>
+                    <input type="radio" name="format" value="pfx" />
+                    both (in PKCS#12 container)</div>
+                <div>
+                    <input type="password" name="privateKeyPassword" /></div>
+            </li>
+        </ul>
+        <input type="hidden" name="serial" value="@Model.Item1" />
+        <input type="submit" class="btn" value="Download" />
+    </div>
+}

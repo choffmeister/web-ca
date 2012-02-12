@@ -57,9 +57,16 @@ namespace WebCA.Security.Extensions
             return serialNumber;
         }
 
-        public static string FormatSerialNumber(byte[] serialNumber)
+        public static string FormatSerialNumber(byte[] serialNumber, bool dropColons = false)
         {
-            return string.Join(":", serialNumber.Select(n => string.Format("{0:x2}", n)));
+            if (dropColons)
+            {
+                return string.Join("", serialNumber.Select(n => string.Format("{0:x2}", n)));
+            }
+            else
+            {
+                return string.Join(":", serialNumber.Select(n => string.Format("{0:x2}", n)));
+            }
         }
 
         public static string BuildDistinguishedName(string country, string state, string locality, string organization, string organizationalUnit, string commonName)

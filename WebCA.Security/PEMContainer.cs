@@ -63,9 +63,24 @@ namespace WebCA.Frontend
             pem.Save(stream);
         }
 
+        public static byte[] Save(string type, byte[] buffer)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                PEMContainer pem = new PEMContainer(type, buffer);
+                pem.Save(stream);
+
+                byte[] result = new byte[(int)stream.Length];
+                stream.Seek(0, SeekOrigin.Begin);
+                stream.Read(result, 0, (int)stream.Length);
+
+                return result;
+            }
+        }
+
         public void Save(Stream stream)
         {
-            using (StreamWriter writer = new StreamWriter(stream))
+            using (NotClosingStreamWriter writer = new NotClosingStreamWriter(stream))
             {
                 foreach (var block in _blocks)
                 {
@@ -126,6 +141,20 @@ namespace WebCA.Frontend
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _blocks.GetEnumerator();
+        }
+    }
+
+    public class NotClosingStreamWriter : StreamWriter
+    {
+        public NotClosingStreamWriter(Stream stream)
+            : base(stream)
+        {
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Flush();
+            base.Dispose(false);
         }
     }
 }
