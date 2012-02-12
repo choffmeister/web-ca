@@ -109,17 +109,7 @@ namespace WebCA.Frontend
 
         public static X509Certificate LoadCertificate(string certificatePath)
         {
-            Regex regex = new Regex(@"-----BEGIN CERTIFICATE-----(?<Base64>[a-zA-Z0-9+/\s]*)-----END CERTIFICATE-----");
-            Match match = regex.Match(File.ReadAllText(certificatePath));
-
-            if (match.Success)
-            {
-                return new X509Certificate(Convert.FromBase64String(match.Groups["Base64"].Value));
-            }
-            else
-            {
-                return null;
-            }
+            return new X509Certificate(GetFirstPemBlock(File.ReadAllLines(certificatePath), "CERTIFICATE"));
         }
 
         public static void SavePrivateKey(PKCS8.PrivateKeyInfo key, string keyPath)
@@ -130,19 +120,9 @@ namespace WebCA.Frontend
                 "\n-----END PRIVATE KEY-----");
         }
 
-        public static PKCS8.PrivateKeyInfo LoadPrivateKey(string certificatePath)
+        public static PKCS8.PrivateKeyInfo LoadPrivateKey(string privateKeyPath)
         {
-            Regex regex = new Regex(@"-----BEGIN PRIVATE KEY-----(?<Base64>[a-zA-Z0-9+/\s]*)-----END PRIVATE KEY-----");
-            Match match = regex.Match(File.ReadAllText(certificatePath));
-
-            if (match.Success)
-            {
-                return new PKCS8.PrivateKeyInfo(Convert.FromBase64String(match.Groups["Base64"].Value));
-            }
-            else
-            {
-                return null;
-            }
+            return new PKCS8.PrivateKeyInfo(GetFirstPemBlock(File.ReadAllLines(privateKeyPath), "PRIVATE KEY"));
         }
 
         public static void SaveEncryptedPrivateKey(PKCS8.EncryptedPrivateKeyInfo key, string keyPath)
@@ -153,19 +133,33 @@ namespace WebCA.Frontend
                 "\n-----END ENCRYPTED PRIVATE KEY-----");
         }
 
-        public static PKCS8.EncryptedPrivateKeyInfo LoadEncryptedPrivateKey(string certificatePath)
+        public static PKCS8.EncryptedPrivateKeyInfo LoadEncryptedPrivateKey(string encryptedPrivateKeyPath)
         {
-            Regex regex = new Regex(@"-----BEGIN ENCRYPTED PRIVATE KEY-----(?<Base64>[a-zA-Z0-9+/\s]*)-----END ENCRYPTED PRIVATE KEY-----");
-            Match match = regex.Match(File.ReadAllText(certificatePath));
+            return new PKCS8.EncryptedPrivateKeyInfo(GetFirstPemBlock(File.ReadAllLines(encryptedPrivateKeyPath), "ENCRYPTED PRIVATE KEY"));
+        }
 
-            if (match.Success)
+        public static byte[] GetFirstPemBlock(string[] lines, string name)
+        {
+            string base64 = null;
+            bool started = false;
+
+            for (int i = 0; i < lines.Length; i++)
             {
-                return new PKCS8.EncryptedPrivateKeyInfo(Convert.FromBase64String(match.Groups["Base64"].Value));
+                if (!started && lines[i] == "-----BEGIN " + name + "-----")
+                {
+                    started = true;
+                }
+                else if (started && lines[i] == "-----END " + name + "-----")
+                {
+                    break;
+                }
+                else
+                {
+                    base64 += lines[i];
+                }
             }
-            else
-            {
-                return null;
-            }
+
+            return Convert.FromBase64String(base64);
         }
 
         public static IEnumerable<string> Split(string str, int chunkSize)
