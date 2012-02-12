@@ -1,0 +1,25 @@
+﻿@model WebCA.Frontend.Forms.SignCertificateForm
+@section title {
+Sign a certificate
+}
+@using (Html.BeginForm())
+{
+    <div>
+        @Html.LabelFor(model => model.SubjectSerial)
+        @Html.ValidationMessageFor(model => model.SubjectSerial)
+        @Html.TextBoxFor(model => model.SubjectSerial)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.IssuerSerial)
+        @Html.ValidationMessageFor(model => model.IssuerSerial)
+        @Html.TextBoxFor(model => model.IssuerSerial)
+    </div>
+    <div>
+        @Html.LabelFor(model => model.IssuerPrivateKeyPassword)
+        @Html.ValidationMessageFor(model => model.IssuerPrivateKeyPassword)
+        @Html.PasswordFor(model => model.IssuerPrivateKeyPassword)
+    </div>
+    <div>
+        <input type="submit" class="btn btn-danger" />
+    </div>
+}

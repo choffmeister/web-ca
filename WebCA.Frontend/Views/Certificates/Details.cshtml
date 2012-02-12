@@ -1,2 +1,5 @@
-﻿@model Mono.Security.ASN1
-<pre>@WebCA.Frontend.Extensions.ASN1Extensions.ConvertToStringTree(Model).ToString()</pre>
+﻿@model Mono.Security.X509.X509Certificate
+@section title {
+Certificate
+}
+<pre>@WebCA.Frontend.Extensions.ASN1Extensions.ConvertToStringTree(new Mono.Security.ASN1(Model.RawData)).ToString()</pre>

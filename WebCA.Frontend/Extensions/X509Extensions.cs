@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
+using Mono.Security.Cryptography;
 using Mono.Security.X509;
 using Mono.Security.X509.Extensions;
 
 namespace WebCA.Frontend.Extensions
 {
-    public class X509Extensions
+    public static class X509Extensions
     {
         private static readonly char[] _charactersToEscape = { '\\', ',', '+', '"', '<', '>', ';' };
 
@@ -29,6 +30,21 @@ namespace WebCA.Frontend.Extensions
             }
 
             return new X509Certificate(builder.Sign(key));
+        }
+
+        public static X509Certificate CreateSignedCertificate(this X509Certificate certificate, X509Certificate issuerCertificate, PKCS8.PrivateKeyInfo issuerPrivateKey)
+        {
+            X509CertificateBuilder builder = new X509CertificateBuilder(3);
+            builder.SerialNumber = certificate.SerialNumber;
+            builder.NotBefore = certificate.ValidFrom;
+            builder.NotAfter = certificate.ValidUntil;
+            builder.IssuerName = issuerCertificate.SubjectName;
+            builder.SubjectName = certificate.SubjectName;
+            builder.SubjectPublicKey = certificate.RSA;
+            builder.Hash = "SHA1";
+            builder.Extensions.AddRange(certificate.Extensions);
+
+            return new X509Certificate(builder.Sign(PKCS8.PrivateKeyInfo.DecodeRSA(issuerPrivateKey.PrivateKey)));
         }
 
         public static byte[] GenerateSerialNumber()

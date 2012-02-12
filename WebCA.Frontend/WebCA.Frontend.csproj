@@ -68,6 +68,7 @@
     <Compile Include="Extensions\ASN1Extensions.cs" />
     <Compile Include="Extensions\PKCS8Extensions.cs" />
     <Compile Include="Extensions\X509Extensions.cs" />
+    <Compile Include="Forms\SignCertificateForm.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -138,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Certificates\Details.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Certificates\Sign.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
