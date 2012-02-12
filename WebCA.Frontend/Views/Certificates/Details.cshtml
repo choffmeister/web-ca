@@ -35,10 +35,53 @@ Certificate
                     <input type="radio" name="format" value="pfx" />
                     both (in PKCS#12 container)</div>
                 <div>
+                    Password to decrypt private key:
                     <input type="password" name="privateKeyPassword" /></div>
+                <div>
+                    New password to encrypt private key within PKCS#12 container:
+                    <input type="password" name="newPrivateKeyPassword" />
+                    <span id="randomized-show"></span>
+                    <button id="random">
+                        Random</button></div>
             </li>
         </ul>
         <input type="hidden" name="serial" value="@Model.Item1" />
         <input type="submit" class="btn" value="Download" />
     </div>
 }
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        $("#random").click(function () {
+            var rndPass = password(16);
+
+            $("[name=newPrivateKeyPassword]").val(rndPass);
+            $("span#randomized-show").html(rndPass);
+
+            setTimeout(function () { $("span#randomized-show").html(""); }, 2500);
+
+            return false;
+        });
+    });
+
+    function password(length, special) {
+        var iteration = 0;
+        var password = "";
+        var randomNumber;
+        if (special == undefined) {
+            var special = false;
+        }
+        while (iteration < length) {
+            randomNumber = (Math.floor((Math.random() * 100)) % 94) + 33;
+            if (!special) {
+                if ((randomNumber >= 33) && (randomNumber <= 47)) { continue; }
+                if ((randomNumber >= 58) && (randomNumber <= 64)) { continue; }
+                if ((randomNumber >= 91) && (randomNumber <= 96)) { continue; }
+                if ((randomNumber >= 123) && (randomNumber <= 126)) { continue; }
+            }
+            iteration++;
+            password += String.fromCharCode(randomNumber);
+        }
+        return password;
+    }
+</script>

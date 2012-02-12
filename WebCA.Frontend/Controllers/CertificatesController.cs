@@ -98,7 +98,7 @@ namespace WebCA.Frontend.Controllers
             }
         }
 
-        public ActionResult Download(string format, string serial, string privateKeyPassword)
+        public ActionResult Download(string format, string serial, string privateKeyPassword, string newPrivateKeyPassword)
         {
             X509Certificate certificate;
             PKCS8.EncryptedPrivateKeyInfo privateKeyEnc;
@@ -129,7 +129,7 @@ namespace WebCA.Frontend.Controllers
                     RSA key = PKCS8.PrivateKeyInfo.DecodeRSA(privateKeyEnc.Decrypt(privateKeyPassword).PrivateKey);
                     pkcs12.AddCertificate(certificate);
                     pkcs12.AddKeyBag(key);
-                    pkcs12.Password = privateKeyPassword;
+                    pkcs12.Password = newPrivateKeyPassword;
 
                     return new FileContentResult(pkcs12.GetBytes(), "application/x-pkcs12") { FileDownloadName = "key" + "." + format };
                 default:
