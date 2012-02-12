@@ -56,6 +56,11 @@ Create new certificate
         @Html.PasswordFor(model => model.PrivateKeyPassphrase)
     </div>
     <div>
+        @Html.LabelFor(model => model.PrivateKeyPassphraseConfirmation)
+        @Html.ValidationMessageFor(model => model.PrivateKeyPassphraseConfirmation)
+        @Html.PasswordFor(model => model.PrivateKeyPassphraseConfirmation)
+    </div>
+    <div>
         <input type="submit" class="btn btn-primary" />
     </div>
 }

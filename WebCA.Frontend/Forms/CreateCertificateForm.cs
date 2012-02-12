@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Web.Mvc;
 
 namespace WebCA.Frontend.Forms
 {
@@ -31,7 +32,14 @@ namespace WebCA.Frontend.Forms
         public DateTime NotAfter { get; set; }
 
         [StringLength(128)]
+        [DataType(DataType.Password)]
         [Required]
         public string PrivateKeyPassphrase { get; set; }
+
+        [StringLength(128)]
+        [DataType(DataType.Password)]
+        [Required]
+        [Compare("PrivateKeyPassphrase", ErrorMessage = "The passphrase and confirmation password do not match.")]
+        public string PrivateKeyPassphraseConfirmation { get; set; }
     }
 }
