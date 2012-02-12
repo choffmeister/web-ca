@@ -1,87 +1,17 @@
-﻿@model Tuple<string, Mono.Security.X509.X509Certificate>
+﻿@model Mono.Security.X509.X509Certificate
 @section title {
 Certificate
 }
 @section subtitle {
-    @Model.Item2.SubjectName
+    @Model.SubjectName
 }
 @section operations
 {
     <div class="btn-group">
-        <a class="btn" href="#download">Download</a>
+        <a class="btn" href="@Url.Action("Download", new { id = ViewBag.Serial })">Download</a>
+    </div>
+    <div class="btn-group">
+        <a class="btn" href="@Url.Action("Index")">Back</a>
     </div>
 }
-<pre>@WebCA.Security.Extensions.ASN1Extensions.ConvertToStringTree(new Mono.Security.ASN1(Model.Item2.RawData)).ToString()</pre>
-<hr />
-<h1 id="download">Download</h1>
-@using (Html.BeginForm("Download", null))
-{
-    <div>
-        <ul>
-            <li>
-                <input type="radio" name="format" value="crt" />
-                Certificate only (DER encoded) </li>
-            <li>
-                <input type="radio" name="format" value="crt.pem" />
-                Certificate only (PEM encoded) </li>
-            <li>
-                <input type="radio" name="format" value="key" />
-                Private key only (DER encoded) </li>
-            <li>
-                <input type="radio" name="format" value="key.pem" />
-                Private key only (PEM encoded) </li>
-            <li>
-                <div>
-                    <input type="radio" name="format" value="pfx" />
-                    both (in PKCS#12 container)</div>
-                <div>
-                    Password to decrypt private key:
-                    <input type="password" name="privateKeyPassword" /></div>
-                <div>
-                    New password to encrypt private key within PKCS#12 container:
-                    <input type="password" name="newPrivateKeyPassword" />
-                    <span id="randomized-show"></span>
-                    <button id="random">
-                        Random</button></div>
-            </li>
-        </ul>
-        <input type="hidden" name="serial" value="@Model.Item1" />
-        <input type="submit" class="btn" value="Download" />
-    </div>
-}
-<script type="text/javascript">
-
-    $(document).ready(function () {
-        $("#random").click(function () {
-            var rndPass = password(16);
-
-            $("[name=newPrivateKeyPassword]").val(rndPass);
-            $("span#randomized-show").html(rndPass);
-
-            setTimeout(function () { $("span#randomized-show").html(""); }, 2500);
-
-            return false;
-        });
-    });
-
-    function password(length, special) {
-        var iteration = 0;
-        var password = "";
-        var randomNumber;
-        if (special == undefined) {
-            var special = false;
-        }
-        while (iteration < length) {
-            randomNumber = (Math.floor((Math.random() * 100)) % 94) + 33;
-            if (!special) {
-                if ((randomNumber >= 33) && (randomNumber <= 47)) { continue; }
-                if ((randomNumber >= 58) && (randomNumber <= 64)) { continue; }
-                if ((randomNumber >= 91) && (randomNumber <= 96)) { continue; }
-                if ((randomNumber >= 123) && (randomNumber <= 126)) { continue; }
-            }
-            iteration++;
-            password += String.fromCharCode(randomNumber);
-        }
-        return password;
-    }
-</script>
+<pre>@ViewBag.ASN1TextTree</pre>

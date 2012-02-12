@@ -6,6 +6,51 @@ namespace WebCA.Security.Extensions
 {
     public static class ASN1Extensions
     {
+        public static string GetCommonName(this ASN1 name)
+        {
+            for (int i = 0; i < name.Count; i++)
+            {
+                ASN1 entry = name[i];
+
+                for (int j = 0; j < entry.Count; j++)
+                {
+                    ASN1 aSN = entry[j];
+                    ASN1 aSN2 = aSN[1];
+                    ASN1 aSN3 = aSN[0];
+
+                    if (aSN3 != null && ASN1Convert.ToOid(aSN3) == "2.5.4.3")
+                    {
+                        string text = null;
+
+                        if (aSN2.Tag == 30)
+                        {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            for (int k = 1; k < aSN2.Value.Length; k += 2)
+                            {
+                                stringBuilder.Append((char)aSN2.Value[k]);
+                            }
+                            text = stringBuilder.ToString();
+                        }
+                        else
+                        {
+                            if (aSN2.Tag == 20)
+                            {
+                                text = Encoding.UTF7.GetString(aSN2.Value);
+                            }
+                            else
+                            {
+                                text = Encoding.UTF8.GetString(aSN2.Value);
+                            }
+                        }
+
+                        return text;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public static StringBuilder ConvertToStringTree(this ASN1 asn1)
         {
             StringBuilder stringBuilder = new StringBuilder();

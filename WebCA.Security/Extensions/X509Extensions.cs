@@ -52,6 +52,7 @@ namespace WebCA.Security.Extensions
             byte[] serialNumber = Guid.NewGuid().ToByteArray();
 
             if ((serialNumber[0] & 0x80) == 0x80)
+
                 serialNumber[0] -= 0x80;
 
             return serialNumber;

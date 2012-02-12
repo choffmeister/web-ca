@@ -3,6 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Web.Mvc;
+using ICSharpCode.SharpZipLib.Core;
+using ICSharpCode.SharpZipLib.Zip;
+using Mono.Security;
 using Mono.Security.Cryptography;
 using Mono.Security.X509;
 using WebCA.Frontend.Forms;
@@ -22,7 +25,11 @@ namespace WebCA.Frontend.Controllers
         {
             X509Certificate certificate = CertificateKeyManager.GetCertificate(id);
 
-            return View(Tuple.Create(id, certificate));
+            this.ViewBag.Serial = id;
+            this.ViewBag.SubjectCommonName = certificate.GetSubjectName().GetCommonName();
+            this.ViewBag.ASN1TextTree = new ASN1(certificate.RawData).ConvertToStringTree().ToString();
+
+            return View(certificate);
         }
 
         public ActionResult Create()
@@ -98,43 +105,98 @@ namespace WebCA.Frontend.Controllers
             }
         }
 
-        public ActionResult Download(string format, string serial, string privateKeyPassword, string newPrivateKeyPassword)
+        public ActionResult Download(string id)
         {
-            X509Certificate certificate;
-            PKCS8.EncryptedPrivateKeyInfo privateKeyEnc;
+            X509Certificate certificate = CertificateKeyManager.GetCertificate(id);
 
-            switch (format)
+            this.ViewBag.Serial = id;
+            this.ViewBag.NewRandomPassword = BitConverter.ToString(SHA1.Create().ComputeHash(Guid.NewGuid().ToByteArray())).Replace("-", "").ToLower().Substring(0, 16);
+
+            return View(certificate);
+        }
+
+        [HttpPost]
+        public ActionResult Download(string[] format, string serial, string encryptionPassword, string newEncryptionPassword)
+        {
+            format = format ?? new string[0];
+
+            X509Certificate certificate = CertificateKeyManager.GetCertificate(serial);
+            string subjectCommonName = certificate.GetSubjectName().GetCommonName().Replace(" ", "_");
+            PKCS8.EncryptedPrivateKeyInfo privateKeyEnc = format.Contains("key") || format.Contains("key-pem") || format.Contains("pfx") ? CertificateKeyManager.GetEncryptedPrivateKey(serial) : null;
+            PKCS8.PrivateKeyInfo privateKeyDec = privateKeyEnc != null ? privateKeyEnc.Decrypt(encryptionPassword) : null;
+            bool reencrypt = !string.IsNullOrEmpty(newEncryptionPassword);
+            Mono.Security.ASN1 a = certificate.GetSubjectName();
+
+            MemoryStream memStream = new MemoryStream();
+            ZipOutputStream zipStream = new ZipOutputStream(memStream);
+            zipStream.SetLevel(3);
+
+            if (format.Contains("crt"))
             {
-                case "crt":
-                    certificate = CertificateKeyManager.GetCertificate(serial);
+                ZipEntry zipEntry = new ZipEntry(subjectCommonName + ".crt");
+                zipEntry.DateTime = DateTime.Now;
+                zipStream.PutNextEntry(zipEntry);
 
-                    return new FileContentResult(certificate.RawData, "application/pkix-cert") { FileDownloadName = "key" + "." + format };
-                case "crt.pem":
-                    certificate = CertificateKeyManager.GetCertificate(serial);
-
-                    return new FileContentResult(PEMContainer.Save(PEMContainer.Certificate, certificate.RawData), "application/x-pem-file") { FileDownloadName = "key" + "." + format };
-                case "key":
-                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
-
-                    return new FileContentResult(privateKeyEnc.GetBytes(), "application/pkcs8") { FileDownloadName = "key" + "." + format };
-                case "key.pem":
-                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
-
-                    return new FileContentResult(PEMContainer.Save(PEMContainer.EncryptedPrivateKey, privateKeyEnc.GetBytes()), "application/pkcs8") { FileDownloadName = "key" + "." + format };
-                case "pfx":
-                    certificate = CertificateKeyManager.GetCertificate(serial);
-                    privateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(serial);
-
-                    PKCS12 pkcs12 = new PKCS12();
-                    RSA key = PKCS8.PrivateKeyInfo.DecodeRSA(privateKeyEnc.Decrypt(privateKeyPassword).PrivateKey);
-                    pkcs12.AddCertificate(certificate);
-                    pkcs12.AddKeyBag(key);
-                    pkcs12.Password = newPrivateKeyPassword;
-
-                    return new FileContentResult(pkcs12.GetBytes(), "application/x-pkcs12") { FileDownloadName = "key" + "." + format };
-                default:
-                    throw new NotSupportedException(string.Format("Format '{0}' is not supported", format));
+                StreamUtils.Copy(new MemoryStream(certificate.RawData), zipStream, new byte[4096]);
+                zipStream.CloseEntry();
             }
+
+            if (format.Contains("crt-pem"))
+            {
+                ZipEntry zipEntry = new ZipEntry(subjectCommonName + ".crt.pem");
+                zipEntry.DateTime = DateTime.Now;
+                zipStream.PutNextEntry(zipEntry);
+
+                StreamUtils.Copy(new MemoryStream(PEMContainer.Save(PEMContainer.Certificate, certificate.RawData)), zipStream, new byte[4096]);
+                zipStream.CloseEntry();
+            }
+
+            if (format.Contains("key"))
+            {
+                byte[] key = reencrypt ? privateKeyDec.Encrypt(newEncryptionPassword).GetBytes() : privateKeyDec.GetBytes();
+
+                ZipEntry zipEntry = new ZipEntry(subjectCommonName + ".key");
+                zipEntry.DateTime = DateTime.Now;
+                zipStream.PutNextEntry(zipEntry);
+
+                StreamUtils.Copy(new MemoryStream(key), zipStream, new byte[4096]);
+                zipStream.CloseEntry();
+            }
+
+            if (format.Contains("key-pem"))
+            {
+                byte[] key = reencrypt ? privateKeyDec.Encrypt(newEncryptionPassword).GetBytes() : privateKeyDec.GetBytes();
+
+                ZipEntry zipEntry = new ZipEntry(subjectCommonName + ".key.pem");
+                zipEntry.DateTime = DateTime.Now;
+                zipStream.PutNextEntry(zipEntry);
+
+                StreamUtils.Copy(new MemoryStream(PEMContainer.Save(reencrypt ? PEMContainer.EncryptedPrivateKey : PEMContainer.PrivateKey, key)), zipStream, new byte[4096]);
+                zipStream.CloseEntry();
+            }
+
+            if (format.Contains("pfx"))
+            {
+                PKCS12 pkcs12 = new PKCS12();
+                RSA key = PKCS8.PrivateKeyInfo.DecodeRSA(privateKeyDec.PrivateKey);
+                pkcs12.AddCertificate(certificate);
+                pkcs12.AddKeyBag(key);
+                pkcs12.Password = newEncryptionPassword;
+
+                ZipEntry zipEntry = new ZipEntry(subjectCommonName + ".pfx");
+                zipEntry.DateTime = DateTime.Now;
+                zipStream.PutNextEntry(zipEntry);
+
+                StreamUtils.Copy(new MemoryStream(pkcs12.GetBytes()), zipStream, new byte[4096]);
+                zipStream.CloseEntry();
+            }
+
+            zipStream.IsStreamOwner = false;
+            zipStream.Close();
+
+            memStream.Position = 0;
+
+            return new FileStreamResult(memStream, "application/zip") { FileDownloadName = subjectCommonName + ".zip" };
         }
     }
 }

@@ -1,0 +1,67 @@
+﻿@model Mono.Security.X509.X509Certificate
+@section title {
+Download
+}
+@section subtitle {
+    @Model.SubjectName
+}
+@section operations
+{
+    <div class="btn-group">
+        <a class="btn" href="@Url.Action("Details", new { id = ViewBag.Serial })">Back</a>
+    </div>
+}
+<p>
+    Please select the formats you want to download
+</p>
+@using (Html.BeginForm("Download", null))
+{
+    <div>
+        <ul>
+            <li>
+                <label for="crt">
+                    Certificate (DER encoded)
+                </label>
+                <input type="checkbox" name="format" id="crt" value="crt" />
+            </li>
+            <li>
+                <label for="crt-pem">
+                    Certificate (PEM encoded)
+                </label>
+                <input type="checkbox" name="format" id="crt-pem" value="crt-pem" />
+            </li>
+            <li>
+                <label for="key">
+                    Private key (DER encoded)
+                </label>
+                <input type="checkbox" name="format" id="key" value="key" />
+            </li>
+            <li>
+                <label for="key-pem">
+                    Private key (PEM encoded)
+                </label>
+                <input type="checkbox" name="format" id="key-pem" value="key-pem" />
+            </li>
+            <li>
+                <label for="pfx">
+                    PKCS#12 container with certificate and private key (DER encoded)
+                </label>
+                <input type="checkbox" name="format" id="pfx" value="pfx" />
+            </li>
+            <li>
+                <label for="encryptionPassword">
+                    Password to decrypt private key
+                </label>
+                <input type="password" name="encryptionPassword" id="encryptionPassword" value="" />
+            </li>
+            <li>
+                <label for="newEncryptionPassword">
+                    New password to encrypt private key before downloading
+                </label>
+                <input type="password" name="newEncryptionPassword" id="newEncryptionPassword" value="" />
+                (random: @(ViewBag.NewRandomPassword)) </li>
+        </ul>
+        <input type="hidden" name="serial" value="@ViewBag.Serial" />
+        <input type="submit" class="btn" value="Download" />
+    </div>
+}
