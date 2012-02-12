@@ -8,6 +8,7 @@ Certificates
             Sign a certificate</a>
     </div>
 }
+<h3>Certificate Authorities</h3>
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
@@ -23,7 +24,39 @@ Certificates
         </tr>
     </thead>
     <tbody>
-        @foreach (var certificate in Model)
+        @foreach (var certificate in Model.Where(n => n.IsCertificateAuthority))
+        {
+            <tr>
+                <td>
+                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.Replace(":", "") })
+                </td>
+                <td>
+                    @certificate.NotBefore
+                </td>
+                <td>
+                    @certificate.NotAfter
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<h3>Other certificates</h3>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>
+                Issued at
+            </th>
+            <th>
+                Not before
+            </th>
+            <th>
+                Not after
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var certificate in Model.Where(n => !n.IsCertificateAuthority))
         {
             <tr>
                 <td>

@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using Mono.Security.Cryptography;
 using Mono.Security.X509;
+using Mono.Security.X509.Extensions;
 using WebCA.Frontend.Extensions;
 
 namespace WebCA.Frontend
@@ -19,13 +20,25 @@ namespace WebCA.Frontend
 
         public static void AddCertificate(X509Certificate certificate, string certificatePath, string keyPath)
         {
-            File.AppendAllText(SerialsPath, string.Format(@"{0} ""{1}"" {2:yyyy-MM-ddTHH:mm:ssZ} {3:yyyy-MM-ddTHH:mm:ssZ} ""{4}"" ""{5}""" + "\n",
+            bool isCertificateAuthority = false;
+
+            foreach (X509Extension ext in certificate.Extensions)
+            {
+                if (ext.Name == "2.5.29.19" && new BasicConstraintsExtension(ext).CertificateAuthority)
+                {
+                    isCertificateAuthority = true;
+                    break;
+                }
+            }
+
+            File.AppendAllText(SerialsPath, string.Format(@"{6} {0} ""{1}"" {2:yyyy-MM-ddTHH:mm:ssZ} {3:yyyy-MM-ddTHH:mm:ssZ} ""{4}"" ""{5}""" + "\n",
                 X509Extensions.FormatSerialNumber(certificate.SerialNumber),
                 certificate.SubjectName,
                 certificate.ValidFrom.ToUniversalTime(),
                 certificate.ValidUntil.ToUniversalTime(),
                 certificatePath,
-                keyPath
+                keyPath,
+                isCertificateAuthority ? "#" : " "
             ));
         }
 
@@ -64,7 +77,7 @@ namespace WebCA.Frontend
         {
             string[] lines = File.ReadAllLines(SerialsPath);
 
-            Regex regex = new Regex(@"^(?<SerialNumber>[^\s]+)\s""(?<SubjectName>.+)""\s(?<NotBefore>[^\s]+)\s(?<NotAfter>[^\s]+)\s""(?<CertificatePath>.+)""\s""(?<PrivateKeyPath>.+)""$");
+            Regex regex = new Regex(@"^\s*(?<IsCertificateAuthority>#)?\s+(?<SerialNumber>[^\s]+)\s+""(?<SubjectName>.+)""\s+(?<NotBefore>[^\s]+)\s+(?<NotAfter>[^\s]+)\s+""(?<CertificatePath>.+)""\s+""(?<PrivateKeyPath>.+)""\s*$");
 
             return lines.Select(n =>
             {
@@ -76,6 +89,7 @@ namespace WebCA.Frontend
                 return new SerialListEntry()
                 {
                     SerialNumber = match.Groups["SerialNumber"].Value,
+                    IsCertificateAuthority = match.Groups["IsCertificateAuthority"].Value == "#",
                     SubjectName = match.Groups["SubjectName"].Value,
                     NotBefore = Convert.ToDateTime(match.Groups["NotBefore"].Value.Replace("T", " ").Replace("Z", "")),
                     NotAfter = Convert.ToDateTime(match.Groups["NotAfter"].Value.Replace("T", " ").Replace("Z", "")),
@@ -165,6 +179,8 @@ namespace WebCA.Frontend
         public class SerialListEntry
         {
             public string SerialNumber { get; set; }
+
+            public bool IsCertificateAuthority { get; set; }
 
             public string SubjectName { get; set; }
 
