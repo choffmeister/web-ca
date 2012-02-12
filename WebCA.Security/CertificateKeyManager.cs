@@ -31,7 +31,7 @@ namespace WebCA.Security
 
         public static string GetCertificatePath(byte[] serial)
         {
-            return Path.Combine(BasePath, "certs\\" + serial.FormatSerialNumber(true) + ".crt-pem");
+            return Path.Combine(BasePath, "certs\\" + serial.FormatSerialNumber(true) + ".crt.pem");
         }
 
         public static string GetPrivateKeyPath(byte[] serial)
