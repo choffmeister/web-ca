@@ -7,24 +7,23 @@ Sign a certificate
     <div>
         @Html.LabelFor(model => model.IssuerSerial)
         @Html.ValidationMessageFor(model => model.IssuerSerial)
-        @Html.DropDownListFor(model => model.IssuerSerial, ((IEnumerable<WebCA.Security.CertificateKeyManager.SerialListEntry>)ViewBag.CACerts).Select(option => new SelectListItem
+        @Html.DropDownListFor(model => model.IssuerSerial, ((IEnumerable<Mono.Security.X509.X509Certificate>)ViewBag.CACerts).Select(option => new SelectListItem
           {
-              Text = (option == null ? "None" : option.SubjectName),
-              Value = option.SerialNumber.Replace(":", ""),
-              Selected = (Model != null) && (option.SerialNumber == Model.IssuerSerial)
+              Text = (option == null ? "None" : option.GetSubjectName().GetCommonName()),
+              Value = option.SerialNumber.FormatSerialNumber(true),
+              Selected = (Model != null) && (option.SerialNumber.FormatSerialNumber(true) == Model.IssuerSerial)
           }), "Choose...")
     </div>
     <div>
         @Html.LabelFor(model => model.SubjectSerial)
         @Html.ValidationMessageFor(model => model.SubjectSerial)
-        @Html.DropDownListFor(model => model.SubjectSerial, ((IEnumerable<WebCA.Security.CertificateKeyManager.SerialListEntry>)ViewBag.Certs).Select(option => new SelectListItem
+        @Html.DropDownListFor(model => model.SubjectSerial, ((IEnumerable<Mono.Security.X509.X509Certificate>)ViewBag.Certs).Select(option => new SelectListItem
           {
-              Text = (option == null ? "None" : option.SubjectName),
-              Value = option.SerialNumber.Replace(":", ""),
-              Selected = (Model != null) && (option.SerialNumber == Model.SubjectSerial)
+              Text = (option == null ? "None" : option.GetSubjectName().GetCommonName()),
+              Value = option.SerialNumber.FormatSerialNumber(true),
+              Selected = (Model != null) && (option.SerialNumber.FormatSerialNumber(true) == Model.IssuerSerial)
           }), "Choose...")
     </div>
-
     <div>
         @Html.LabelFor(model => model.IssuerPrivateKeyPassword)
         @Html.ValidationMessageFor(model => model.IssuerPrivateKeyPassword)

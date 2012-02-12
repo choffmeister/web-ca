@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebCA.Security.CertificateKeyManager.SerialListEntry>
+﻿@model IEnumerable<Mono.Security.X509.X509Certificate>
 @section title {
 Certificates
 }
@@ -24,17 +24,17 @@ Certificates
         </tr>
     </thead>
     <tbody>
-        @foreach (var certificate in Model.Where(n => n.IsCertificateAuthority))
+        @foreach (var certificate in Model.Where(n => n.GetIsCertificateAuthority()))
         {
             <tr>
                 <td>
-                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.Replace(":", "") })
+                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.FormatSerialNumber(true) })
                 </td>
                 <td>
-                    @certificate.NotBefore
+                    @certificate.ValidFrom
                 </td>
                 <td>
-                    @certificate.NotAfter
+                    @certificate.ValidUntil
                 </td>
             </tr>
         }
@@ -56,17 +56,17 @@ Certificates
         </tr>
     </thead>
     <tbody>
-        @foreach (var certificate in Model.Where(n => !n.IsCertificateAuthority))
+        @foreach (var certificate in Model.Where(n => !n.GetIsCertificateAuthority()))
         {
             <tr>
                 <td>
-                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.Replace(":", "") })
+                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.FormatSerialNumber(true) })
                 </td>
                 <td>
-                    @certificate.NotBefore
+                    @certificate.ValidFrom
                 </td>
                 <td>
-                    @certificate.NotAfter
+                    @certificate.ValidUntil
                 </td>
             </tr>
         }

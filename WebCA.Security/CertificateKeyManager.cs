@@ -45,7 +45,7 @@ namespace WebCA.Security
 
         public static string GetCertificatePath(string serial)
         {
-            var elements = ListCertificates().ToList();
+            var elements = ListCertificateEntries().ToList();
             SerialListEntry entry = elements.SingleOrDefault(n => n.SerialNumber.Replace(":", "") == serial);
 
             return entry != null ? entry.CertificatePath : null;
@@ -53,7 +53,7 @@ namespace WebCA.Security
 
         public static string GetPrivateKeyPath(string serial)
         {
-            var elements = ListCertificates().ToList();
+            var elements = ListCertificateEntries().ToList();
             SerialListEntry entry = elements.SingleOrDefault(n => n.SerialNumber.Replace(":", "") == serial);
 
             return entry != null ? entry.PrivateKeyPath : null;
@@ -74,7 +74,12 @@ namespace WebCA.Security
             return LoadEncryptedPrivateKey(GetPrivateKeyPath(serial));
         }
 
-        public static IEnumerable<SerialListEntry> ListCertificates()
+        public static IEnumerable<X509Certificate> ListCertificates()
+        {
+            return ListCertificateEntries().Select(n => new X509Certificate(File.ReadAllBytes(n.CertificatePath)));
+        }
+
+        public static IEnumerable<SerialListEntry> ListCertificateEntries()
         {
             string[] lines = File.ReadAllLines(SerialsPath);
 

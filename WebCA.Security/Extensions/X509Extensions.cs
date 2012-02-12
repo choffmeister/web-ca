@@ -47,6 +47,19 @@ namespace WebCA.Security.Extensions
             return new X509Certificate(builder.Sign(PKCS8.PrivateKeyInfo.DecodeRSA(issuerPrivateKey.PrivateKey)));
         }
 
+        public static bool GetIsCertificateAuthority(this X509Certificate certificate)
+        {
+            foreach (X509Extension ext in certificate.Extensions)
+            {
+                if (ext.Name == "2.5.29.19" && new BasicConstraintsExtension(ext).CertificateAuthority)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static byte[] GenerateSerialNumber()
         {
             byte[] serialNumber = Guid.NewGuid().ToByteArray();
@@ -58,7 +71,7 @@ namespace WebCA.Security.Extensions
             return serialNumber;
         }
 
-        public static string FormatSerialNumber(byte[] serialNumber, bool dropColons = false)
+        public static string FormatSerialNumber(this byte[] serialNumber, bool dropColons = false)
         {
             if (dropColons)
             {
