@@ -8,12 +8,17 @@ Certificates
             Sign a certificate</a>
     </div>
 }
-<h3>Certificate Authorities</h3>
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
             <th>
-                Issued at
+                Subject
+            </th>
+            <th>
+                Issuer
+            </th>
+            <th>
+                CA
             </th>
             <th>
                 Not before
@@ -24,43 +29,20 @@ Certificates
         </tr>
     </thead>
     <tbody>
-        @foreach (var certificate in Model.Where(n => n.GetIsCertificateAuthority()))
+        @foreach (var certificate in Model)
         {
             <tr>
                 <td>
-                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.FormatSerialNumber(true) })
+                    @Html.ActionLink(certificate.GetSubjectName().GetCommonName(), "Details", new { id = certificate.SerialNumber.FormatSerialNumber(true) }, new { title = certificate.SubjectName })
                 </td>
                 <td>
-                    @certificate.ValidFrom
+                    @if (!certificate.IsSelfSigned)
+                    {
+                        <span title="@certificate.IssuerName">@certificate.GetIssuerName().GetCommonName()</span>
+                    }
                 </td>
                 <td>
-                    @certificate.ValidUntil
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<h3>Other certificates</h3>
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>
-                Issued at
-            </th>
-            <th>
-                Not before
-            </th>
-            <th>
-                Not after
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var certificate in Model.Where(n => !n.GetIsCertificateAuthority()))
-        {
-            <tr>
-                <td>
-                    @Html.ActionLink(certificate.SubjectName, "Details", new { id = certificate.SerialNumber.FormatSerialNumber(true) })
+                    @certificate.GetIsCertificateAuthority()
                 </td>
                 <td>
                     @certificate.ValidFrom
