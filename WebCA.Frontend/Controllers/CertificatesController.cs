@@ -68,6 +68,12 @@ namespace WebCA.Frontend.Controllers
 
         public ActionResult Sign()
         {
+            var certs = CertificateKeyManager.ListCertificates();
+            var caCerts = certs.Where(n => n.IsCertificateAuthority);
+
+            this.ViewBag.CACerts = certs.Where(n => n.IsCertificateAuthority);
+            this.ViewBag.Certs = certs;
+
             return View();
         }
 
