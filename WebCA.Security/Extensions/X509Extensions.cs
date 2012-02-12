@@ -35,7 +35,7 @@ namespace WebCA.Security.Extensions
         public static X509Certificate CreateSignedCertificate(this X509Certificate certificate, X509Certificate issuerCertificate, PKCS8.PrivateKeyInfo issuerPrivateKey)
         {
             X509CertificateBuilder builder = new X509CertificateBuilder(3);
-            builder.SerialNumber = certificate.SerialNumber;
+            builder.SerialNumber = GenerateSerialNumber();
             builder.NotBefore = certificate.ValidFrom;
             builder.NotAfter = certificate.ValidUntil;
             builder.IssuerName = issuerCertificate.SubjectName;
@@ -81,6 +81,16 @@ namespace WebCA.Security.Extensions
             {
                 return string.Join(":", serialNumber.Select(n => string.Format("{0:x2}", n)));
             }
+        }
+
+        public static byte[] ParseSerialNumber(this string serialNumber)
+        {
+            serialNumber = serialNumber.Replace(":", "");
+
+            return Enumerable.Range(0, serialNumber.Length)
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(serialNumber.Substring(x, 2), 16))
+                .ToArray();
         }
 
         public static string BuildDistinguishedName(string country, string state, string locality, string organization, string organizationalUnit, string commonName)

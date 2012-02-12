@@ -19,71 +19,36 @@ namespace WebCA.Security
 
         public static string BasePath { get; set; }
 
-        public static void AddCertificate(X509Certificate certificate, string certificatePath, string keyPath)
+        public static void AddCertificate(X509Certificate certificate)
         {
-            bool isCertificateAuthority = false;
-
-            foreach (X509Extension ext in certificate.Extensions)
-            {
-                if (ext.Name == "2.5.29.19" && new BasicConstraintsExtension(ext).CertificateAuthority)
-                {
-                    isCertificateAuthority = true;
-                    break;
-                }
-            }
-
-            File.AppendAllText(SerialsPath, string.Format(@"{6} {0} ""{1}"" {2:yyyy-MM-ddTHH:mm:ssZ} {3:yyyy-MM-ddTHH:mm:ssZ} ""{4}"" ""{5}""" + "\n",
+            File.AppendAllText(SerialsPath, string.Format(@"{0} ""{1}"" {2:yyyy-MM-ddTHH:mm:ssZ} {3:yyyy-MM-ddTHH:mm:ssZ}" + "\n",
                 X509Extensions.FormatSerialNumber(certificate.SerialNumber),
                 certificate.SubjectName,
                 certificate.ValidFrom.ToUniversalTime(),
-                certificate.ValidUntil.ToUniversalTime(),
-                certificatePath,
-                keyPath,
-                isCertificateAuthority ? "#" : " "
+                certificate.ValidUntil.ToUniversalTime()
             ));
         }
 
-        public static string GetCertificatePath(string serial)
+        public static string GetCertificatePath(byte[] serial)
         {
-            var elements = ListCertificateEntries().ToList();
-            SerialListEntry entry = elements.SingleOrDefault(n => n.SerialNumber.Replace(":", "") == serial);
-
-            return entry != null ? entry.CertificatePath : null;
+            return Path.Combine(BasePath, "certs\\" + serial.FormatSerialNumber(true) + ".crt-pem");
         }
 
-        public static string GetPrivateKeyPath(string serial)
+        public static string GetPrivateKeyPath(byte[] serial)
         {
-            var elements = ListCertificateEntries().ToList();
-            SerialListEntry entry = elements.SingleOrDefault(n => n.SerialNumber.Replace(":", "") == serial);
-
-            return entry != null ? entry.PrivateKeyPath : null;
-        }
-
-        public static X509Certificate GetCertificate(string serial)
-        {
-            return LoadCertificate(GetCertificatePath(serial));
-        }
-
-        public static PKCS8.PrivateKeyInfo GetPrivateKey(string serial)
-        {
-            return LoadPrivateKey(GetPrivateKeyPath(serial));
-        }
-
-        public static PKCS8.EncryptedPrivateKeyInfo GetEncryptedPrivateKey(string serial)
-        {
-            return LoadEncryptedPrivateKey(GetPrivateKeyPath(serial));
+            return Path.Combine(BasePath, "keys\\" + serial.FormatSerialNumber(true) + ".key.pem");
         }
 
         public static IEnumerable<X509Certificate> ListCertificates()
         {
-            return ListCertificateEntries().Select(n => new X509Certificate(File.ReadAllBytes(n.CertificatePath)));
+            return ListCertificateSerials().Select(n => LoadCertificate(n));
         }
 
-        public static IEnumerable<SerialListEntry> ListCertificateEntries()
+        public static IEnumerable<byte[]> ListCertificateSerials()
         {
             string[] lines = File.ReadAllLines(SerialsPath);
 
-            Regex regex = new Regex(@"^\s*(?<IsCertificateAuthority>#)?\s+(?<SerialNumber>[^\s]+)\s+""(?<SubjectName>.+)""\s+(?<NotBefore>[^\s]+)\s+(?<NotAfter>[^\s]+)\s+""(?<CertificatePath>.+)""\s+""(?<PrivateKeyPath>.+)""\s*$");
+            Regex regex = new Regex(@"^(?<SerialNumber>[^\s]+)\s+""(?<SubjectName>.+)""\s+(?<NotBefore>[^\s]+)\s+(?<NotAfter>[^\s]+)\s*$");
 
             return lines.Select(n =>
             {
@@ -92,82 +57,40 @@ namespace WebCA.Security
                 if (!match.Success)
                     return null;
 
-                return new SerialListEntry()
-                {
-                    SerialNumber = match.Groups["SerialNumber"].Value,
-                    IsCertificateAuthority = match.Groups["IsCertificateAuthority"].Value == "#",
-                    SubjectName = match.Groups["SubjectName"].Value,
-                    NotBefore = Convert.ToDateTime(match.Groups["NotBefore"].Value.Replace("T", " ").Replace("Z", "")),
-                    NotAfter = Convert.ToDateTime(match.Groups["NotAfter"].Value.Replace("T", " ").Replace("Z", "")),
-                    CertificatePath = match.Groups["CertificatePath"].Value,
-                    PrivateKeyPath = match.Groups["PrivateKeyPath"].Value
-                };
+                return match.Groups["SerialNumber"].Value.ParseSerialNumber();
             }).Where(n => n != null);
         }
 
-        public static void SaveCertificate(X509Certificate certificate, string certificatePath)
+        public static void SaveCertificate(X509Certificate certificate)
         {
-            using (FileStream file = new FileStream(certificatePath, FileMode.Create))
+            using (FileStream file = new FileStream(GetCertificatePath(certificate.SerialNumber), FileMode.Create))
             {
                 PEMContainer.Save(PEMContainer.Certificate, certificate.RawData, file);
             }
         }
 
-        public static X509Certificate LoadCertificate(string certificatePath)
+        public static X509Certificate LoadCertificate(byte[] serial)
         {
-            using (FileStream file = new FileStream(certificatePath, FileMode.Open))
+            using (FileStream file = new FileStream(GetCertificatePath(serial), FileMode.Open))
             {
                 return new X509Certificate(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.Certificate).Item2);
             }
         }
 
-        public static void SavePrivateKey(PKCS8.PrivateKeyInfo key, string keyPath)
+        public static void SaveEncryptedPrivateKey(PKCS8.EncryptedPrivateKeyInfo key, byte[] serial)
         {
-            using (FileStream file = new FileStream(keyPath, FileMode.Create))
-            {
-                PEMContainer.Save(PEMContainer.PrivateKey, key.GetBytes(), file);
-            }
-        }
-
-        public static PKCS8.PrivateKeyInfo LoadPrivateKey(string privateKeyPath)
-        {
-            using (FileStream file = new FileStream(privateKeyPath, FileMode.Open))
-            {
-                return new PKCS8.PrivateKeyInfo(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.PrivateKey).Item2);
-            }
-        }
-
-        public static void SaveEncryptedPrivateKey(PKCS8.EncryptedPrivateKeyInfo key, string keyPath)
-        {
-            using (FileStream file = new FileStream(keyPath, FileMode.Create))
+            using (FileStream file = new FileStream(GetPrivateKeyPath(serial), FileMode.Create))
             {
                 PEMContainer.Save(PEMContainer.EncryptedPrivateKey, key.GetBytes(), file);
             }
         }
 
-        public static PKCS8.EncryptedPrivateKeyInfo LoadEncryptedPrivateKey(string encryptedPrivateKeyPath)
+        public static PKCS8.EncryptedPrivateKeyInfo LoadEncryptedPrivateKey(byte[] serial)
         {
-            using (FileStream file = new FileStream(encryptedPrivateKeyPath, FileMode.Open))
+            using (FileStream file = new FileStream(GetPrivateKeyPath(serial), FileMode.Open))
             {
                 return new PKCS8.EncryptedPrivateKeyInfo(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.EncryptedPrivateKey).Item2);
             }
-        }
-
-        public class SerialListEntry
-        {
-            public string SerialNumber { get; set; }
-
-            public bool IsCertificateAuthority { get; set; }
-
-            public string SubjectName { get; set; }
-
-            public DateTime NotBefore { get; set; }
-
-            public DateTime NotAfter { get; set; }
-
-            public string CertificatePath { get; set; }
-
-            public string PrivateKeyPath { get; set; }
         }
     }
 }

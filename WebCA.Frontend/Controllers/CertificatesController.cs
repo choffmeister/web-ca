@@ -23,7 +23,7 @@ namespace WebCA.Frontend.Controllers
 
         public ActionResult Details(string id)
         {
-            X509Certificate certificate = CertificateKeyManager.GetCertificate(id);
+            X509Certificate certificate = CertificateKeyManager.LoadCertificate(id.ParseSerialNumber());
 
             this.ViewBag.Serial = id;
             this.ViewBag.SubjectCommonName = certificate.GetSubjectName().GetCommonName();
@@ -61,9 +61,9 @@ namespace WebCA.Frontend.Controllers
                     throw new Exception();
                 }
 
-                CertificateKeyManager.SaveCertificate(caCert, certificatePath);
-                CertificateKeyManager.SaveEncryptedPrivateKey(caPrivateKeyEnc, keyPath);
-                CertificateKeyManager.AddCertificate(caCert, certificatePath, keyPath);
+                CertificateKeyManager.SaveCertificate(caCert);
+                CertificateKeyManager.SaveEncryptedPrivateKey(caPrivateKeyEnc, caCert.SerialNumber);
+                CertificateKeyManager.AddCertificate(caCert);
 
                 return RedirectToAction("Index");
             }
@@ -88,13 +88,16 @@ namespace WebCA.Frontend.Controllers
         {
             if (ModelState.IsValid)
             {
-                X509Certificate subjectCertificate = CertificateKeyManager.GetCertificate(model.SubjectSerial);
-                X509Certificate issuerCertificate = CertificateKeyManager.GetCertificate(model.IssuerSerial);
-                PKCS8.EncryptedPrivateKeyInfo issuerPrivateKeyEnc = CertificateKeyManager.GetEncryptedPrivateKey(model.IssuerSerial);
+                X509Certificate subjectCertificate = CertificateKeyManager.LoadCertificate(model.SubjectSerial.ParseSerialNumber());
+                PKCS8.EncryptedPrivateKeyInfo subjectPrivateKeyEnc = CertificateKeyManager.LoadEncryptedPrivateKey(model.IssuerSerial.ParseSerialNumber());
+                X509Certificate issuerCertificate = CertificateKeyManager.LoadCertificate(model.IssuerSerial.ParseSerialNumber());
+                PKCS8.EncryptedPrivateKeyInfo issuerPrivateKeyEnc = CertificateKeyManager.LoadEncryptedPrivateKey(model.IssuerSerial.ParseSerialNumber());
                 PKCS8.PrivateKeyInfo issuerPrivateKey = issuerPrivateKeyEnc.Decrypt(model.IssuerPrivateKeyPassword);
 
                 X509Certificate signedSubjectCertificate = subjectCertificate.CreateSignedCertificate(issuerCertificate, issuerPrivateKey);
-                CertificateKeyManager.SaveCertificate(signedSubjectCertificate, CertificateKeyManager.GetCertificatePath(model.SubjectSerial));
+                CertificateKeyManager.SaveEncryptedPrivateKey(subjectPrivateKeyEnc, signedSubjectCertificate.SerialNumber);
+                CertificateKeyManager.SaveCertificate(signedSubjectCertificate);
+                CertificateKeyManager.AddCertificate(signedSubjectCertificate);
 
                 return RedirectToAction("Index");
             }
@@ -106,7 +109,7 @@ namespace WebCA.Frontend.Controllers
 
         public ActionResult Download(string id)
         {
-            X509Certificate certificate = CertificateKeyManager.GetCertificate(id);
+            X509Certificate certificate = CertificateKeyManager.LoadCertificate(id.ParseSerialNumber());
 
             this.ViewBag.Serial = id;
             this.ViewBag.NewRandomPassword = BitConverter.ToString(SHA1.Create().ComputeHash(Guid.NewGuid().ToByteArray())).Replace("-", "").ToLower().Substring(0, 16);
@@ -119,9 +122,10 @@ namespace WebCA.Frontend.Controllers
         {
             format = format ?? new string[0];
 
-            X509Certificate certificate = CertificateKeyManager.GetCertificate(serial);
+            X509Certificate certificate = CertificateKeyManager.LoadCertificate(serial.ParseSerialNumber());
             string subjectCommonName = certificate.GetSubjectName().GetCommonName().Replace(" ", "_");
-            PKCS8.EncryptedPrivateKeyInfo privateKeyEnc = format.Contains("key") || format.Contains("key-pem") || format.Contains("pfx") ? CertificateKeyManager.GetEncryptedPrivateKey(serial) : null;
+            PKCS8.EncryptedPrivateKeyInfo privateKeyEnc = format.Contains("key") || format.Contains("key-pem") || format.Contains("pfx") ?
+                CertificateKeyManager.LoadEncryptedPrivateKey(serial.ParseSerialNumber()) : null;
             PKCS8.PrivateKeyInfo privateKeyDec = privateKeyEnc != null ? privateKeyEnc.Decrypt(encryptionPassword) : null;
             bool reencrypt = !string.IsNullOrEmpty(newEncryptionPassword);
             Mono.Security.ASN1 a = certificate.GetSubjectName();
