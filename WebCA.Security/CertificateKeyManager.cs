@@ -8,7 +8,7 @@ using Mono.Security.X509;
 using Mono.Security.X509.Extensions;
 using WebCA.Security.Extensions;
 
-namespace WebCA.Frontend
+namespace WebCA.Security
 {
     public static class CertificateKeyManager
     {
