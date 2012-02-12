@@ -46,8 +46,8 @@ namespace WebCA.Frontend.Controllers
                 PKCS8.PrivateKeyInfo caPrivateKey = PKCS8Extensions.CreateFromRSA(caKey);
                 PKCS8.EncryptedPrivateKeyInfo caPrivateKeyEnc = caPrivateKey.Encrypt(model.PrivateKeyPassphrase);
 
-                string certificatePath = Path.Combine(this.Server.MapPath("~/App_Data"), "certs\\" + model.CommonName + ".crt.pem").ToLower();
-                string keyPath = Path.Combine(this.Server.MapPath("~/App_Data"), "keys\\" + model.CommonName + ".key.pem").ToLower();
+                string certificatePath = Path.Combine(CertificateKeyManager.BasePath, "certs\\" + model.CommonName + ".crt.pem").ToLower();
+                string keyPath = Path.Combine(CertificateKeyManager.BasePath, "keys\\" + model.CommonName + ".key.pem").ToLower();
 
                 if (System.IO.File.Exists(certificatePath) || System.IO.File.Exists(keyPath))
                 {

@@ -12,7 +12,12 @@ namespace WebCA.Security
 {
     public static class CertificateKeyManager
     {
-        public static string SerialsPath { get; set; }
+        public static string SerialsPath
+        {
+            get { return Path.Combine(BasePath, "serials.txt"); }
+        }
+
+        public static string BasePath { get; set; }
 
         public static void AddCertificate(X509Certificate certificate, string certificatePath, string keyPath)
         {

@@ -2,6 +2,7 @@
 using System.Web.Mvc;
 using System.Web.Routing;
 using WebCA.Security;
+using System.Web.Configuration;
 
 namespace WebCA.Frontend
 {
@@ -33,7 +34,7 @@ namespace WebCA.Frontend
             RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
 
-            CertificateKeyManager.SerialsPath = Path.Combine(this.Server.MapPath("~/App_Data"), "serials.txt"); ;
+            CertificateKeyManager.BasePath = WebConfigurationManager.OpenWebConfiguration("/").AppSettings.Settings["dataDirectory"].Value;
         }
     }
 }
