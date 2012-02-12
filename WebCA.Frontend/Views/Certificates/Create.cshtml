@@ -51,6 +51,15 @@ Create new certificate
         @Html.TextBoxFor(model => model.NotAfter)
     </div>
     <div>
+        @Html.LabelFor(model => model.ExtendedKeyUsage)
+        @Html.ValidationMessageFor(model => model.NotAfter)
+        @Html.ListBoxFor(model => model.ExtendedKeyUsage, X509Extensions.ExtendedKeyUsage.Select(option => new SelectListItem()
+        {
+            Text = option.Item2,
+            Value = option.Item1
+        } ))
+    </div>
+    <div>
         @Html.LabelFor(model => model.PrivateKeyPassphrase)
         @Html.ValidationMessageFor(model => model.PrivateKeyPassphrase)
         @Html.PasswordFor(model => model.PrivateKeyPassphrase)

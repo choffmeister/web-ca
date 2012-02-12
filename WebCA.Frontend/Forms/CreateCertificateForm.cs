@@ -31,6 +31,8 @@ namespace WebCA.Frontend.Forms
 
         public DateTime NotAfter { get; set; }
 
+        public string[] ExtendedKeyUsage { get; set; }
+
         [StringLength(128)]
         [DataType(DataType.Password)]
         [Required]

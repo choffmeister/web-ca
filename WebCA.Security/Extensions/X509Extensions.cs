@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using Mono.Security.Cryptography;
@@ -11,7 +12,8 @@ namespace WebCA.Security.Extensions
     {
         private static readonly char[] _charactersToEscape = { '\\', ',', '+', '"', '<', '>', ';' };
 
-        public static X509Certificate CreateCertificate(string subjectName, bool isCertificateAuthority, DateTime notBefore, DateTime notAfter, RSA key)
+        public static X509Certificate CreateCertificate(string subjectName, bool isCertificateAuthority, DateTime notBefore, DateTime notAfter, RSA key,
+            string[] extendedKeyUsage = null)
         {
             string name = subjectName;
 
@@ -27,6 +29,13 @@ namespace WebCA.Security.Extensions
             if (isCertificateAuthority)
             {
                 builder.Extensions.Add(new BasicConstraintsExtension() { CertificateAuthority = true });
+            }
+
+            if (extendedKeyUsage != null && extendedKeyUsage.Length > 0)
+            {
+                ExtendedKeyUsageExtension eku = new ExtendedKeyUsageExtension();
+                eku.KeyPurpose.AddRange(extendedKeyUsage);
+                builder.Extensions.Add(eku);
             }
 
             return new X509Certificate(builder.Sign(key));
@@ -117,6 +126,23 @@ namespace WebCA.Security.Extensions
             }
 
             return value;
+        }
+
+        public static IEnumerable<Tuple<string, string>> ExtendedKeyUsage
+        {
+            get
+            {
+                return new Tuple<string, string>[] {
+                    Tuple.Create("1.3.6.1.5.5.7.3.1", "Server authentication"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.2", "Client authentication"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.3", "Code signing"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.4", "Email Protection"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.5", "IPSec end system"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.6", "IPSec tunnel"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.7", "IPSec user"),
+                    Tuple.Create("1.3.6.1.5.5.7.3.8", "Timestamping")
+                };
+            }
         }
     }
 }
