@@ -2,7 +2,7 @@
 using System.Text;
 using Mono.Security;
 
-namespace WebCA.Frontend.Extensions
+namespace WebCA.Security.Extensions
 {
     public static class ASN1Extensions
     {

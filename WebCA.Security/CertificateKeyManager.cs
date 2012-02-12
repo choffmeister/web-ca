@@ -3,20 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web;
 using Mono.Security.Cryptography;
 using Mono.Security.X509;
 using Mono.Security.X509.Extensions;
-using WebCA.Frontend.Extensions;
+using WebCA.Security.Extensions;
 
 namespace WebCA.Frontend
 {
     public static class CertificateKeyManager
     {
-        public static string SerialsPath
-        {
-            get { return Path.Combine(HttpContext.Current.Server.MapPath("~/App_Data"), "serials.txt"); }
-        }
+        public static string SerialsPath { get; set; }
 
         public static void AddCertificate(X509Certificate certificate, string certificatePath, string keyPath)
         {
@@ -101,72 +97,49 @@ namespace WebCA.Frontend
 
         public static void SaveCertificate(X509Certificate certificate, string certificatePath)
         {
-            File.WriteAllText(certificatePath,
-                "-----BEGIN CERTIFICATE-----\n" +
-                string.Join("\n", Split(Convert.ToBase64String(certificate.RawData), 64)) +
-                "\n-----END CERTIFICATE-----");
+            using (FileStream file = new FileStream(certificatePath, FileMode.Create))
+            {
+                PEMContainer.Save(PEMContainer.Certificate, certificate.RawData, file);
+            }
         }
 
         public static X509Certificate LoadCertificate(string certificatePath)
         {
-            return new X509Certificate(GetFirstPemBlock(File.ReadAllLines(certificatePath), "CERTIFICATE"));
+            using (FileStream file = new FileStream(certificatePath, FileMode.Open))
+            {
+                return new X509Certificate(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.Certificate).Item2);
+            }
         }
 
         public static void SavePrivateKey(PKCS8.PrivateKeyInfo key, string keyPath)
         {
-            File.WriteAllText(keyPath,
-                "-----BEGIN PRIVATE KEY-----\n" +
-                string.Join("\n", Split(Convert.ToBase64String(key.GetBytes()), 64)) +
-                "\n-----END PRIVATE KEY-----");
+            using (FileStream file = new FileStream(keyPath, FileMode.Create))
+            {
+                PEMContainer.Save(PEMContainer.PrivateKey, key.GetBytes(), file);
+            }
         }
 
         public static PKCS8.PrivateKeyInfo LoadPrivateKey(string privateKeyPath)
         {
-            return new PKCS8.PrivateKeyInfo(GetFirstPemBlock(File.ReadAllLines(privateKeyPath), "PRIVATE KEY"));
+            using (FileStream file = new FileStream(privateKeyPath, FileMode.Open))
+            {
+                return new PKCS8.PrivateKeyInfo(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.PrivateKey).Item2);
+            }
         }
 
         public static void SaveEncryptedPrivateKey(PKCS8.EncryptedPrivateKeyInfo key, string keyPath)
         {
-            File.WriteAllText(keyPath,
-                "-----BEGIN ENCRYPTED PRIVATE KEY-----\n" +
-                string.Join("\n", Split(Convert.ToBase64String(key.GetBytes()), 64)) +
-                "\n-----END ENCRYPTED PRIVATE KEY-----");
+            using (FileStream file = new FileStream(keyPath, FileMode.Create))
+            {
+                PEMContainer.Save(PEMContainer.EncryptedPrivateKey, key.GetBytes(), file);
+            }
         }
 
         public static PKCS8.EncryptedPrivateKeyInfo LoadEncryptedPrivateKey(string encryptedPrivateKeyPath)
         {
-            return new PKCS8.EncryptedPrivateKeyInfo(GetFirstPemBlock(File.ReadAllLines(encryptedPrivateKeyPath), "ENCRYPTED PRIVATE KEY"));
-        }
-
-        public static byte[] GetFirstPemBlock(string[] lines, string name)
-        {
-            string base64 = null;
-            bool started = false;
-
-            for (int i = 0; i < lines.Length; i++)
+            using (FileStream file = new FileStream(encryptedPrivateKeyPath, FileMode.Open))
             {
-                if (!started && lines[i] == "-----BEGIN " + name + "-----")
-                {
-                    started = true;
-                }
-                else if (started && lines[i] == "-----END " + name + "-----")
-                {
-                    break;
-                }
-                else
-                {
-                    base64 += lines[i];
-                }
-            }
-
-            return Convert.FromBase64String(base64);
-        }
-
-        public static IEnumerable<string> Split(string str, int chunkSize)
-        {
-            for (int i = 0; i < str.Length; i += chunkSize)
-            {
-                yield return str.Substring(i, Math.Min(chunkSize, str.Length - i));
+                return new PKCS8.EncryptedPrivateKeyInfo(PEMContainer.Load(file).First(n => n.Item1 == PEMContainer.EncryptedPrivateKey).Item2);
             }
         }
 

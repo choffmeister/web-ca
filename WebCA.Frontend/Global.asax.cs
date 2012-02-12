@@ -1,4 +1,5 @@
-﻿using System.Web.Mvc;
+﻿using System.IO;
+using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace WebCA.Frontend
@@ -30,6 +31,8 @@ namespace WebCA.Frontend
 
             RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
+
+            CertificateKeyManager.SerialsPath = Path.Combine(this.Server.MapPath("~/App_Data"), "serials.txt"); ;
         }
     }
 }

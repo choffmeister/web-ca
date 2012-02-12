@@ -5,7 +5,7 @@ using Mono.Security.Cryptography;
 using Mono.Security.X509;
 using Mono.Security.X509.Extensions;
 
-namespace WebCA.Frontend.Extensions
+namespace WebCA.Security.Extensions
 {
     public static class X509Extensions
     {

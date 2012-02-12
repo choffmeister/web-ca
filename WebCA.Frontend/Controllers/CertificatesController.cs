@@ -4,8 +4,8 @@ using System.Security.Cryptography;
 using System.Web.Mvc;
 using Mono.Security.Cryptography;
 using Mono.Security.X509;
-using WebCA.Frontend.Extensions;
 using WebCA.Frontend.Forms;
+using WebCA.Security.Extensions;
 
 namespace WebCA.Frontend.Controllers
 {

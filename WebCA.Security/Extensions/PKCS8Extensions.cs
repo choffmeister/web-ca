@@ -2,7 +2,7 @@
 using Mono.Security.Cryptography;
 using Mono.Security.X509;
 
-namespace WebCA.Frontend.Extensions
+namespace WebCA.Security.Extensions
 {
     public static class PKCS8Extensions
     {
