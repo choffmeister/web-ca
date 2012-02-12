@@ -72,7 +72,7 @@ namespace WebCA.Security.Extensions
                 case 2:
                     if (asn1.Value.Length <= 16)
                     {
-                        stringBuilder.AppendLine(string.Format("{0}- Integer: {1} (0x{2})", indent, ASN1Convert.ToInt32(asn1), BitConverter.ToString(asn1.Value)));
+                        stringBuilder.AppendLine(string.Format("{0}- Integer: {1} (0x{2})", indent, ASN1Convert.ToInt32(asn1), BitConverter.ToString(asn1.Value).Replace("-", "").ToLower()));
                     }
                     else
                     {
@@ -111,6 +111,15 @@ namespace WebCA.Security.Extensions
                     break;
                 case 12:
                     stringBuilder.AppendLine(string.Format("{0}- String: {1}", indent, Encoding.UTF8.GetString(asn1.Value)));
+                    break;
+                case 19:
+                    stringBuilder.AppendLine(string.Format("{0}- String: {1}", indent, Encoding.UTF8.GetString(asn1.Value)));
+                    break;
+                case 20:
+                    stringBuilder.AppendLine(string.Format("{0}- String: {1}", indent, Encoding.UTF7.GetString(asn1.Value)));
+                    break;
+                case 23:
+                    stringBuilder.AppendLine(string.Format("{0}- UTC Time: {1}", indent, ASN1Convert.ToDateTime(asn1)));
                     break;
                 case 48:
                     stringBuilder.AppendLine(string.Format("{0}- Node: ", indent));
